@@ -16,12 +16,14 @@ public class ConfigImpl implements IServerConfig {
   private String mainNetType;
   private int mainRPCVersion;
   private byte[] mainGatewayAddress;
+  private String mainTronGridKey;
   private String sideSolidityNode;
   private String sideFullNode;
   private String sideNetType;
   private int sideRPCVersion;
   private byte[] sideGatewayAddress;
   private byte[] sideChainId;
+  private String sideTronGridKey;
 
   private String contractAddress;
   private String rtuPriKey;
@@ -41,6 +43,7 @@ public class ConfigImpl implements IServerConfig {
 
     mainGatewayAddress = AddressUtil
         .decode58Check(config.getString("mainchain.gateway_address"));
+    mainTronGridKey = config.getString("mainchain.trongrid_key");
 
     //sidechain config
     if (config.hasPath("sidechain.soliditynode.ip.list")) {
@@ -54,6 +57,7 @@ public class ConfigImpl implements IServerConfig {
     sideGatewayAddress = AddressUtil
         .decode58Check(config.getString("sidechain.gateway_address"));
     sideChainId = ByteArray.fromHexString(config.getString("sidechain.sideChainId"));
+    sideTronGridKey = config.getString("sidechain.trongrid_key");
 
     // game config
     contractAddress = config.getString("game.contractAddress");

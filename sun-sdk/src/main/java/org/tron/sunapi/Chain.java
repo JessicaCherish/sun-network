@@ -1015,6 +1015,103 @@ public class Chain implements ChainInterface {
   }
 
   /**
+   * @return the result of delegate resource
+   * @author sun-network
+   */
+  public SunNetworkResponse<TransactionResponse> delegateResource(int resourceCode, long balance, String receiverAddress, boolean lock, long lockPeriod) {
+    SunNetworkResponse<TransactionResponse> resp = new SunNetworkResponse<>();
+
+    try {
+      TransactionResponse result = serverApi
+          .delegateResource(resourceCode, balance, receiverAddress, lock, lockPeriod);
+      resp.setData(result);
+      if (result.getResult()) {
+        resp.success(result);
+      } else {
+        resp.failed(ErrorCodeEnum.FAILED);
+      }
+    } catch (Exception e) {
+      logger.error("delegateResource error", e);
+      resp.failed(ErrorCodeEnum.EXCEPTION_UNKNOWN);
+    }
+
+    return resp;
+  }
+
+  /**
+   * @return the result of delegate resource
+   * @author sun-network
+   */
+  public SunNetworkResponse<TransactionResponse> delegateResource(String ownerAddress, int resourceCode, long balance, String receiverAddress, boolean lock, long lockPeriod, Integer permissionId) {
+    SunNetworkResponse<TransactionResponse> resp = new SunNetworkResponse<>();
+
+    try {
+      TransactionResponse result = serverApi
+          .delegateResource(ownerAddress, resourceCode, balance, receiverAddress, lock, lockPeriod, permissionId);
+      resp.setData(result);
+      if (result.getResult()) {
+        resp.success(result);
+      } else {
+        resp.failed(ErrorCodeEnum.FAILED);
+      }
+    } catch (Exception e) {
+      logger.error("delegateResource error", e);
+      resp.failed(ErrorCodeEnum.EXCEPTION_UNKNOWN);
+    }
+
+    return resp;
+  }
+
+  /**
+   * @return the result of unDelegate resource
+   * @author sun-network
+   */
+  public SunNetworkResponse<TransactionResponse> unDelegateResource(int resourceCode, long balance, String receiverAddress) {
+    SunNetworkResponse<TransactionResponse> resp = new SunNetworkResponse<>();
+
+    try {
+      TransactionResponse result = serverApi
+          .unDelegateResource(resourceCode, balance, receiverAddress);
+      resp.setData(result);
+      if (result.getResult()) {
+        resp.success(result);
+      } else {
+        resp.failed(ErrorCodeEnum.FAILED);
+      }
+    } catch (Exception e) {
+      logger.error("unDelegateResource error", e);
+      resp.failed(ErrorCodeEnum.EXCEPTION_UNKNOWN);
+    }
+
+    return resp;
+  }
+
+  /**
+   * @return the result of unDelegate resource
+   * @author sun-network
+   */
+  public SunNetworkResponse<TransactionResponse> unDelegateResource(String ownerAddress, int resourceCode, long balance, String receiverAddress, Integer permissionId) {
+    SunNetworkResponse<TransactionResponse> resp = new SunNetworkResponse<>();
+
+    try {
+      TransactionResponse result = serverApi
+          .unDelegateResource(ownerAddress, resourceCode, balance, receiverAddress, permissionId);
+      resp.setData(result);
+      if (result.getResult()) {
+        resp.success(result);
+      } else {
+        resp.failed(ErrorCodeEnum.FAILED);
+      }
+    } catch (Exception e) {
+      logger.error("unDelegateResource error", e);
+      resp.failed(ErrorCodeEnum.EXCEPTION_UNKNOWN);
+    }
+
+    return resp;
+  }
+
+
+  /**
    * @return the result of inject fund
    * @author sun-network
    */

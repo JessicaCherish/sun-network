@@ -9,4 +9,7 @@ public interface IMultiTransactionSign {
       byte[] chainId);
 
   Transaction setPermissionId(Transaction transaction);
+
+  Transaction setPermissionId(Transaction transaction, Integer permissionId);
+
 }

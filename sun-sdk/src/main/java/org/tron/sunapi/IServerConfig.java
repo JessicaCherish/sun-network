@@ -23,4 +23,8 @@ public interface IServerConfig {
   byte[] getSideGatewayAddress();
 
   byte[] getSideChainId();
+
+  String getMainTronGridKey();
+
+  String getSideTronGridKey();
 }

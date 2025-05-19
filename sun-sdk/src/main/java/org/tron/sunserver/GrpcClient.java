@@ -6,6 +6,9 @@ import io.grpc.ManagedChannelBuilder;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +62,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
 
+
 public class GrpcClient {
 
   private static final Logger logger = LoggerFactory.getLogger("GrpcClient");
@@ -68,12 +72,31 @@ public class GrpcClient {
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
 
-//  public GrpcClient(String host, int port) {
-//    channel = ManagedChannelBuilder.forAddress(host, port)
-//        .usePlaintext(true)
-//        .build();
-//    blockingStub = WalletGrpc.newBlockingStub(channel);
-//  }
+  public GrpcClient(String fullnode, String soliditynode, String trongridKey) {
+    // add these new codes: create a custom header
+    Metadata header=new Metadata();
+    Metadata.Key<String> key =
+        Metadata.Key.of("TRON-PRO-API-KEY", Metadata.ASCII_STRING_MARSHALLER);
+    header.put(key, trongridKey);
+
+
+    if (!StringUtils.isEmpty(fullnode)) {
+      channelFull = ManagedChannelBuilder.forTarget(fullnode)
+          .usePlaintext()
+          .build();
+      blockingStubFull = WalletGrpc.newBlockingStub(channelFull)
+          .withInterceptors(new HeaderClientInterceptor(header));
+    }
+    if (!StringUtils.isEmpty(soliditynode)) {
+      channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+          .usePlaintext()
+          .build();
+      blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity)
+          .withInterceptors(new HeaderClientInterceptor(header));
+      blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity)
+          .withInterceptors(new HeaderClientInterceptor(header));
+    }
+  }
 
   public GrpcClient(String fullnode, String soliditynode) {
     if (!StringUtils.isEmpty(fullnode)) {
@@ -281,6 +304,14 @@ public class GrpcClient {
   public TransactionExtention createTransferAssetTransaction2(
       Contract.TransferAssetContract contract) {
     return blockingStubFull.transferAsset2(contract);
+  }
+
+  public TransactionExtention createTransaction2(Contract.UnDelegateResourceContract contract) {
+    return blockingStubFull.unDelegateResource(contract);
+  }
+
+  public TransactionExtention createTransaction2(Contract.DelegateResourceContract contract) {
+    return blockingStubFull.delegateResource(contract);
   }
 
   public Transaction createParticipateAssetIssueTransaction(

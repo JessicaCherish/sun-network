@@ -15,16 +15,18 @@ public class ServerConfigImpl implements IServerConfig {
   private String mainNetType;
   private int mainRPCVersion;
   private byte[] mainGatewayAddress;
+  private String mainTronGridKey;
   private String sideSolidityNode;
   private String sideFullNode;
   private String sideNetType;
   private int sideRPCVersion;
   private byte[] sideGatewayAddress;
   private byte[] sideChainId;
+  private String sideTronGridKey;
 
   ServerConfigImpl(String file) {
     Config config = Configuration.getByPath(file);
-//mainchain config
+    //mainchain config
     if (config.hasPath("mainchain.soliditynode.ip.list")) {
       setMainSolidityNode(config.getStringList("mainchain.soliditynode.ip.list").get(0));
     }
@@ -41,8 +43,11 @@ public class ServerConfigImpl implements IServerConfig {
       setMainGatewayAddress(AddressUtil
           .decode58Check(config.getString("mainchain.gateway_address")));
     }
+    if (config.hasPath("mainchain.trongrid_key")) {
+      setMainTronGridKey(config.getString("mainchain.trongrid_key"));
+    }
 
-//sidechain config
+    //sidechain config
     if (config.hasPath("sidechain.soliditynode.ip.list")) {
       setSideSolidityNode(config.getStringList("sidechain.soliditynode.ip.list").get(0));
     }
@@ -60,5 +65,9 @@ public class ServerConfigImpl implements IServerConfig {
           .decode58Check(config.getString("sidechain.gateway_address")));
     }
     setSideChainId(ByteArray.fromHexString(config.getString("sidechain.sideChainId")));
+
+    if (config.hasPath("sidechain.trongrid_key")) {
+      setSideTronGridKey(config.getString("sidechain.trongrid_key"));
+    }
   }
 }

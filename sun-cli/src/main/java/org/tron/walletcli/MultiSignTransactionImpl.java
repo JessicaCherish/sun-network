@@ -73,6 +73,21 @@ public class MultiSignTransactionImpl implements IMultiTransactionSign {
     return transaction;
   }
 
+  @Override
+  public Transaction setPermissionId(Transaction transaction, Integer permissionId) {
+    try {
+      System.out.println(
+          "Transaction hex string is  " + ByteArray.toHexString(transaction.toByteArray()));
+      System.out.println(
+          "Please confirm and input your permission id, if input y or Y means default 0, other non-numeric characters will cancell transaction.");
+      transaction = Utils.setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      System.out.println("User cancelled");
+      return null;
+    }
+    return transaction;
+  }
+
   private Transaction signTransaction(Transaction transaction, ECKey myKey, byte[] chainId) {
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());

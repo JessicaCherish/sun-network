@@ -22,6 +22,9 @@ service Wallet {
     };
   };
 
+  rpc GetContractInfo (BytesMessage) returns (SmartContractDataWrapper) {
+  }
+
   rpc GetAccountById (Account) returns (Account) {
     option (google.api.http) = {
       post: "/wallet/getaccountbyid"
@@ -233,6 +236,13 @@ service Wallet {
   //Use this function instead of WithdrawBalance.
   rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtention) {
   }
+
+  rpc DelegateResource (DelegateResourceContract) returns (TransactionExtention) {
+  }
+
+  rpc UnDelegateResource (UnDelegateResourceContract) returns (TransactionExtention) {
+  }
+
   //Please use UpdateAsset2 instead of this function.
   rpc UpdateAsset (UpdateAssetContract) returns (Transaction) {
     option (google.api.http) = {

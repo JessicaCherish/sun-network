@@ -259,3 +259,19 @@ message FundInjectContract {
   bytes owner_address = 1;
   int64 amount = 2;
 }
+
+message DelegateResourceContract {
+  bytes owner_address = 1;
+  ResourceCode resource = 2;
+  int64 balance = 3;
+  bytes receiver_address = 4;
+  bool  lock = 5;
+  int64 lock_period = 6;
+}
+
+message UnDelegateResourceContract {
+  bytes owner_address = 1;
+  ResourceCode resource = 2;
+  int64 balance = 3;
+  bytes receiver_address = 4;
+}

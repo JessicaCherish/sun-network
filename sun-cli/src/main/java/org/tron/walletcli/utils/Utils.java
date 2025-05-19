@@ -2205,6 +2205,25 @@ public class Utils {
     return transaction;
   }
 
+  public static Transaction setPermissionId(Transaction transaction, Integer permissionId) throws CancelException {
+    if (transaction.getSignatureCount() != 0
+        || transaction.getRawData().getContract(0).getPermissionId() != 0) {
+      return transaction;
+    }
+    if (permissionId < 0) {
+      throw new CancelException("User cancelled");
+    }
+    if (permissionId != 0) {
+      Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+      Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
+          .setPermissionId(permissionId);
+      raw.clearContract();
+      raw.addContract(contract);
+      transaction = transaction.toBuilder().setRawData(raw).build();
+    }
+    return transaction;
+  }
+
   private static int inputPermissionId() {
     Scanner in = new Scanner(System.in);
     while (true) {

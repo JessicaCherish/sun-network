@@ -43,6 +43,11 @@ public class TransactionResponse {
    */
   public String constantResult;
 
+  /**
+   * the result for constant transaction
+   */
+  private Long timestamp;
+
   public enum ResponseType {
     TRANSACTION_NORMAL(0),
 
@@ -83,6 +88,16 @@ public class TransactionResponse {
     this.trxId    = trxId;
     this.constantResult = null;
     this.responseType   = ResponseType.TRANSACTION_NORMAL;
+  }
+
+  public  TransactionResponse(Return returnCode, String trxId, Long timestamp) {
+    this.respCode = returnCode.getCode();
+    this.result   = returnCode.getResult();
+    this.message  = returnCode.getMessage().toStringUtf8();
+    this.trxId    = trxId;
+    this.constantResult = null;
+    this.responseType   = ResponseType.TRANSACTION_NORMAL;
+    this.timestamp = timestamp;
   }
 
   public  TransactionResponse(boolean result, code c, String trxId, String constantResult) {

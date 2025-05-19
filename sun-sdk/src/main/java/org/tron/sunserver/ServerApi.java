@@ -123,7 +123,11 @@ public class ServerApi {
     }
     mainGatewayAddress = config.getMainGatewayAddress();
 
-    return new GrpcClient(config.getMainFullNode(), config.getMainSolidityNode());
+    if (StringUtils.isEmpty(config.getMainTronGridKey())) {
+      return new GrpcClient(config.getMainFullNode(), config.getMainSolidityNode());
+    } else {
+      return new GrpcClient(config.getMainFullNode(), config.getMainSolidityNode(), config.getMainTronGridKey());
+    }
   }
 
   public static GrpcClient initSide(IServerConfig config) {
@@ -141,7 +145,11 @@ public class ServerApi {
     sideGatewayAddress = config.getSideGatewayAddress();
     sideChainId = config.getSideChainId();
 
-    return new GrpcClient(config.getSideFullNode(), config.getSideSolidityNode());
+    if (StringUtils.isEmpty(config.getSideTronGridKey())) {
+      return new GrpcClient(config.getSideFullNode(), config.getSideSolidityNode());
+    } else {
+      return new GrpcClient(config.getSideFullNode(), config.getSideSolidityNode(), config.getSideTronGridKey());
+    }
   }
 
   public boolean isMainChain() {
@@ -303,6 +311,22 @@ public class ServerApi {
     return transaction;
   }
 
+  private Transaction signTransaction(Transaction transaction, Integer permissionId) {
+    if (transaction.getRawData().getTimestamp() == 0) {
+      transaction = TransactionUtils.setTimestamp(transaction);
+    }
+    transaction = TransactionUtils.setExpirationTime(transaction);
+
+    Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+    Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
+        .setPermissionId(permissionId);
+    raw.clearContract();
+    raw.addContract(contract);
+    transaction = transaction.toBuilder().setRawData(raw).build();
+    transaction = TransactionUtils.sign(transaction, this.getEcKey(), getCurrentChainId(), isMainChain());
+    return transaction;
+  }
+
   private TransactionResponse processTransactionExt2(TransactionExtention transactionExtention) {
     if (transactionExtention == null) {
       return new TransactionResponse("Transaction extension is null");
@@ -328,7 +352,38 @@ public class ServerApi {
     Return response = rpcCli.broadcastTransaction(transaction);
     if (response.getResult()) {
       return new TransactionResponse(response,
-          ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+          ByteArray.toHexString(transactionExtention.getTxid().toByteArray()), transaction.getRawData().getTimestamp());
+    }
+
+    return new TransactionResponse(response);
+  }
+
+  private TransactionResponse processTransactionExt2(TransactionExtention transactionExtention, Integer permissionId) {
+    if (transactionExtention == null) {
+      return new TransactionResponse("Transaction extension is null");
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      return new TransactionResponse(ret);
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      return new TransactionResponse("Transaction is empty");
+    }
+
+    transaction = signTransaction(transaction, permissionId);
+    if (Objects.isNull(transaction)) {
+      logger.info("Sign transaction cancelled");
+      return new TransactionResponse("Sign transaction cancelled");
+    }
+    ByteString txid = ByteString.copyFrom(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+    transactionExtention = transactionExtention.toBuilder().setTransaction(transaction)
+        .setTxid(txid).build();
+
+    Return response = rpcCli.broadcastTransaction(transaction);
+    if (response.getResult()) {
+      return new TransactionResponse(response,
+          ByteArray.toHexString(transactionExtention.getTxid().toByteArray()), transaction.getRawData().getTimestamp());
     }
 
     return new TransactionResponse(response);
@@ -892,6 +947,127 @@ public class ServerApi {
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
+    return builder.build();
+  }
+
+  public TransactionResponse delegateResource(int resourceCode, long balance, String receiverAddress, boolean lock, long lockPeriod) {
+    Contract.DelegateResourceContract contract = createDelegateResourceContract(resourceCode, balance, receiverAddress, lock, lockPeriod);
+
+    TransactionExtention transaction = rpcCli.createTransaction2(contract);
+
+    return processTransactionExt2(transaction);
+  }
+
+  public TransactionResponse delegateResource(String ownerAddress, int resourceCode, long balance, String receiverAddress, boolean lock, long lockPeriod, Integer permissionId) {
+    Contract.DelegateResourceContract contract = createDelegateResourceContract(ownerAddress, resourceCode, balance, receiverAddress, lock, lockPeriod);
+
+    TransactionExtention transaction = rpcCli.createTransaction2(contract);
+    return processTransactionExt2(transaction, permissionId);
+  }
+
+  private Contract.DelegateResourceContract createDelegateResourceContract(int resourceCode,
+                                                                           long balance,
+                                                                           String receiverAddress,
+                                                                           boolean lock,
+                                                                           long lockPeriod) {
+    byte[] address = getAddress();
+    Contract.DelegateResourceContract.Builder builder = Contract.DelegateResourceContract
+        .newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(address);
+    builder.setOwnerAddress(byteAddreess)
+        .setResourceValue(resourceCode)
+        .setBalance(balance)
+        .setLock(lock)
+        .setLockPeriod(lockPeriod);
+
+    if (receiverAddress != null && !receiverAddress.equals("")) {
+      ByteString receiverAddressBytes = ByteString.copyFrom(
+          Objects.requireNonNull(AddressUtil.decodeFromBase58Check(receiverAddress)));
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
+
+    return builder.build();
+  }
+
+  private Contract.DelegateResourceContract createDelegateResourceContract(String ownerAddress,
+                                                                           int resourceCode,
+                                                                           long balance,
+                                                                           String receiverAddress,
+                                                                           boolean lock,
+                                                                           long lockPeriod) {
+    Contract.DelegateResourceContract.Builder builder = Contract.DelegateResourceContract
+        .newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(
+        Objects.requireNonNull(AddressUtil.decodeFromBase58Check(ownerAddress)));
+    builder.setOwnerAddress(byteAddreess)
+        .setResourceValue(resourceCode)
+        .setBalance(balance)
+        .setLock(lock)
+        .setLockPeriod(lockPeriod);
+
+    if (receiverAddress != null && !receiverAddress.equals("")) {
+      ByteString receiverAddressBytes = ByteString.copyFrom(
+          Objects.requireNonNull(AddressUtil.decodeFromBase58Check(receiverAddress)));
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
+
+    return builder.build();
+  }
+
+  public TransactionResponse unDelegateResource(int resourceCode, long balance, String receiverAddress) {
+    Contract.UnDelegateResourceContract contract = createUnDelegateResourceContract(resourceCode, balance, receiverAddress);
+
+    TransactionExtention transaction = rpcCli.createTransaction2(contract);
+
+    return processTransactionExt2(transaction);
+  }
+
+  public TransactionResponse unDelegateResource(String ownerAddress, int resourceCode, long balance, String receiverAddress, Integer permissionId) {
+    Contract.UnDelegateResourceContract contract = createUnDelegateResourceContract(ownerAddress, resourceCode, balance, receiverAddress);
+
+    TransactionExtention transaction = rpcCli.createTransaction2(contract);
+
+    return processTransactionExt2(transaction, permissionId);
+  }
+
+  private Contract.UnDelegateResourceContract createUnDelegateResourceContract(int resourceCode,
+                                                                               long balance,
+                                                                               String receiverAddress) {
+    byte[] address = getAddress();
+    Contract.UnDelegateResourceContract.Builder builder = Contract.UnDelegateResourceContract
+        .newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(address);
+    builder.setOwnerAddress(byteAddreess)
+        .setResourceValue(resourceCode)
+        .setBalance(balance);
+
+    if (receiverAddress != null && !receiverAddress.equals("")) {
+      ByteString receiverAddressBytes = ByteString.copyFrom(
+          Objects.requireNonNull(AddressUtil.decodeFromBase58Check(receiverAddress)));
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
+
+    return builder.build();
+  }
+
+  private Contract.UnDelegateResourceContract createUnDelegateResourceContract(String ownerAddress,
+                                                                               int resourceCode,
+                                                                               long balance,
+                                                                               String receiverAddress) {
+    Contract.UnDelegateResourceContract.Builder builder = Contract.UnDelegateResourceContract
+        .newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(
+        Objects.requireNonNull(AddressUtil.decodeFromBase58Check(ownerAddress)));
+    builder.setOwnerAddress(byteAddreess)
+        .setResourceValue(resourceCode)
+        .setBalance(balance);
+
+    if (receiverAddress != null && !receiverAddress.equals("")) {
+      ByteString receiverAddressBytes = ByteString.copyFrom(
+          Objects.requireNonNull(AddressUtil.decodeFromBase58Check(receiverAddress)));
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
+
     return builder.build();
   }
 
