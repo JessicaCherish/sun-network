@@ -79,6 +79,7 @@ import org.tron.common.utils.ByteUtil;
 
 public class ECKey implements Serializable {
 
+
   /**
    * The parameters of the secp256k1 curve.
    */
