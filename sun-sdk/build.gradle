@@ -69,7 +69,7 @@ dependencies {
     implementation group: 'com.beust', name: 'jcommander', version: '1.72'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.13'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.5.18'
     implementation 'com.maxmind.geoip2:geoip2:4.2.1'
 // https://mvnrepository.com/artifact/org.projectlombok/lombok
     implementation group: 'org.projectlombok', name: 'lombok', version: '1.18.2'
