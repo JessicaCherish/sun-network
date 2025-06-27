@@ -152,4 +152,5 @@ shadowJar {
     mergeServiceFiles()
 }
 
+
 processResources.dependsOn(generateProto) // explicit_dependency
